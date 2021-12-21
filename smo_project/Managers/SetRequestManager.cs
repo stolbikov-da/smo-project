@@ -10,6 +10,7 @@ namespace smo_project.Managers
     {
         private Models.Buffer buffer;
         private Models.Source[] sources;
+        private uint countOfGeneratedRequests = 0;
 
         public SetRequestManager(Models.Buffer buffer, uint countOfSources, double minRequestCreationTime, double maxRequestCreationTime)
         {
@@ -87,6 +88,11 @@ namespace smo_project.Managers
             }
 
             throw new ArgumentOutOfRangeException("SetRequestManager: no sources with such next time = " + time);
+        }
+
+        public Models.Request getSourceCurrentRequest(uint sourceID)
+        {
+            return sources[sourceID].CurrentRequest;
         }
     }
 }

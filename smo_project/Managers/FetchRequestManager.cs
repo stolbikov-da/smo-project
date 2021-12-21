@@ -119,5 +119,10 @@ namespace smo_project.Managers
 
             return result;
         }
+
+        public Models.Request getDeviceCurrentRequest(uint deviceID)
+        {
+            return devices[deviceID].RequestOnDevice;
+        }
     }
 }

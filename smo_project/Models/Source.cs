@@ -16,6 +16,7 @@ namespace smo_project.Models
         private uint countOfCreatedRequests = 0;
         private double minRequestCreationTime = 0.0;
         private double maxRequestCreationTime = 0.0;
+        private Request currentRequest;
 
         public Source(double minRequestCreationTime, double maxRequestCreationTime)
         {
@@ -44,7 +45,8 @@ namespace smo_project.Models
             {
                 throw new MethodAccessException("Source" + id + ": tried to create request, while creating another!");
             }
-            return new Request(nextRequestReadyTime);
+            currentRequest = new Request(nextRequestReadyTime);
+            return currentRequest;
         }
 
         public bool isAvailable()
@@ -60,5 +62,6 @@ namespace smo_project.Models
         }
 
         public double NextRequestReadyTime { get => nextRequestReadyTime; }
+        public Request CurrentRequest { get => currentRequest; }
     }
 }

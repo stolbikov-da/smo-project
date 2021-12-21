@@ -74,5 +74,15 @@ namespace smo_project.Models
                 pointer = 0;
             }
         }
+
+        public Request getRequest(uint index)
+        {
+            if (index >= size)
+            {
+                throw new ArgumentOutOfRangeException("Buffer: index is out of range!");
+            }
+
+            return requests[index];
+        }
     }
 }

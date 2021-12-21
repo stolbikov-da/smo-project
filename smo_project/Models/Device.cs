@@ -67,5 +67,6 @@ namespace smo_project.Models
         }
 
         public double NextRequestCompletedTime { get => nextRequestCompletedTime; }
+        public Request RequestOnDevice { get => requestOnDevice; }
     }
 }

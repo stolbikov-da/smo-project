@@ -31,5 +31,7 @@ namespace smo_project.Models
         public double CreationTime { get => creationTime; }
 
         public double CompletionTime { get => completionTime; }
+
+        public uint Id { get => id; }
     }
 }
