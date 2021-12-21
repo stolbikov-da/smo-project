@@ -8,6 +8,7 @@ namespace smo_project.Managers
 {
     class FetchRequestManager
     {
+        private uint countOfCompletedRequests = 0;
         private Models.Buffer buffer;
         private Models.Device[] devices;
         private Models.Request requestWaitingDevice = null;
@@ -70,6 +71,7 @@ namespace smo_project.Managers
         public void processRequestOnDevice(uint deviceID)
         {
             devices[deviceID].processRequest();
+            countOfCompletedRequests++;
         }
 
         private Models.Request getRequestFromBuffer()
@@ -109,6 +111,21 @@ namespace smo_project.Managers
             return devices[deviceID].NextRequestCompletedTime;
         }
 
+        public bool isAvailableDevice()
+        {
+            bool result = false;
+
+            for (uint i = 0; i < devices.Length; i++)
+            {
+                if (devices[i].isAvailable())
+                {
+                    result = true;
+                    break;
+                }
+            }
+            return result;
+        }
+
         public bool isRequestWaitingDevice()
         {
             bool result = false;
@@ -120,9 +137,26 @@ namespace smo_project.Managers
             return result;
         }
 
+        public double getDeviceUsage(uint deviceID)
+        {
+            return devices[deviceID].UsageTime / ModellingManager.currentTime;
+        }
+
+        public double getDeviceCompletedRequests(uint deviceID)
+        {
+            return devices[deviceID].CountOfCompletedRequests;
+        }
+
+        public double getDeviceAverageProcessingTime(uint deviceID)
+        {
+            return devices[deviceID].UsageTime / devices[deviceID].CountOfCompletedRequests;
+        }
+
         public Models.Request getDeviceCurrentRequest(uint deviceID)
         {
             return devices[deviceID].RequestOnDevice;
         }
+
+        public uint CountOfCompletedRequests { get => countOfCompletedRequests; }
     }
 }

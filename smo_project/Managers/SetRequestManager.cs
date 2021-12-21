@@ -51,6 +51,13 @@ namespace smo_project.Managers
             
         }
 
+        public Models.Request getRequestFromSource(uint sourceID)
+        {
+            Models.Request temp = sources[sourceID].CurrentRequest;
+            sources[sourceID].CurrentRequest = null;
+            return temp;
+        }
+
         public Models.Request getNewRequest()
         {
             Models.Request request = null;
@@ -93,6 +100,11 @@ namespace smo_project.Managers
         public Models.Request getSourceCurrentRequest(uint sourceID)
         {
             return sources[sourceID].CurrentRequest;
+        }
+
+        public uint getSourceCountGeneratedRequests(uint sourceID)
+        {
+            return sources[sourceID].CountOfCreatedRequests;
         }
     }
 }

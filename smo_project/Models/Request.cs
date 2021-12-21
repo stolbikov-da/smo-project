@@ -22,15 +22,14 @@ namespace smo_project.Models
             id = countOfCreatedRequests++;
         }
 
-        public void closeRequest(double completionTime)
+        public void closeRequest()
         {
-            this.completionTime = completionTime;
             countOfCompletedRequests++;
         }
 
         public double CreationTime { get => creationTime; }
 
-        public double CompletionTime { get => completionTime; }
+        public double CompletionTime { get => completionTime; set => completionTime = value; }
 
         public uint Id { get => id; }
     }

@@ -27,19 +27,23 @@ namespace smo_project.Models
 
         public Request popRequest()
         {
+            Request temp = null;
+
             if (countOfRequests > 0)
             {
                 countOfRequests--;
                 if (pointer != 0)
                 {
                     pointer--;
-                    return requests[pointer];
                 }
                 else
                 {
                     pointer = size - 1;
-                    return requests[pointer];
                 }
+
+                temp = requests[pointer];
+                requests[pointer] = null;
+                return temp;
             }
             else
             {
@@ -84,5 +88,11 @@ namespace smo_project.Models
 
             return requests[index];
         }
+
+        public uint CountOfRefusals { get => countOfRefusals; }
+
+        public uint CountOfRequests { get => countOfRequests; }
+
+        public uint Pointer { get => pointer; }
     }
 }

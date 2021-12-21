@@ -15,6 +15,7 @@ namespace smo_project.Models
         private double nextRequestCompletedTime = 0.0;
         private uint productivity = 1;
         private Request requestOnDevice = null;
+        private double usageTime = 0.0;
         public Device(uint productivity)
         {
             this.productivity = productivity;
@@ -30,13 +31,16 @@ namespace smo_project.Models
 
             if (isAvailable())
             {
-                double A = Managers.ModellingManager.maxRequestProcessingTime;
+                double A = Managers.ModellingManager.processingTimeLambda;
                 double lnA = Math.Log(A);
                 double B = A * (1 - Managers.ModellingManager.rand.NextDouble());
                 double lnB = Math.Log(B);
 
                 requestOnDevice = request;
-                nextRequestCompletedTime = request.CreationTime + (lnA - lnB) / A / productivity;
+                double processingTime = (lnA - lnB) / A / productivity;
+                usageTime += processingTime;
+                nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
+                requestOnDevice.CompletionTime = nextRequestCompletedTime;
             }
         }
 
@@ -44,7 +48,7 @@ namespace smo_project.Models
         {
             if (!isAvailable())
             {
-                requestOnDevice.closeRequest(nextRequestCompletedTime);
+                requestOnDevice.closeRequest();
                 requestOnDevice = null;
                 countOfCompletedRequests++;
             }
@@ -68,5 +72,8 @@ namespace smo_project.Models
 
         public double NextRequestCompletedTime { get => nextRequestCompletedTime; }
         public Request RequestOnDevice { get => requestOnDevice; }
+        public double UsageTime { get => usageTime; }
+
+        public uint CountOfCompletedRequests { get => countOfCompletedRequests; }
     }
 }

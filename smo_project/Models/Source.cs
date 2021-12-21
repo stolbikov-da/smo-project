@@ -62,6 +62,8 @@ namespace smo_project.Models
         }
 
         public double NextRequestReadyTime { get => nextRequestReadyTime; }
-        public Request CurrentRequest { get => currentRequest; }
+        public Request CurrentRequest { get => currentRequest; set => currentRequest = value; }
+
+        public uint CountOfCreatedRequests { get => countOfCreatedRequests; }
     }
 }
