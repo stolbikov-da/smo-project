@@ -58,16 +58,18 @@ namespace smo_project.Models
                 throw new ArgumentNullException("Buffer: tried to push null instead of request!");
             }
 
-            requests[pointer] = request;
-
             if (countOfRequests != size)
             {
                 countOfRequests++;
             }
             else
             {
+                requests[pointer].CompletionTime = Managers.ModellingManager.currentTime;
+                Managers.ModellingManager.refusedRequests.Add(requests[pointer]);
                 countOfRefusals++;
             }
+
+            requests[pointer] = request;
 
             if (pointer != size - 1)
             {

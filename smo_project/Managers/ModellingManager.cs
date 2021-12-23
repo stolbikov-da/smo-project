@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -19,16 +20,26 @@ namespace smo_project.Managers
         public static uint devicesProductivity = 1;
         public static double maxRequestCreationTime = 2;
         public static double minRequestCreationTime = 1;
-        public static uint countOfSources = 3;
-        public static uint countOfDevices = 5;
-        public static uint bufferSize = 5;
-        public static uint countOfRequestsForModulation = 1000;
+        public static uint countOfSources = 5;
+        public static uint countOfDevices = 2;
+        public static uint bufferSize = 3;
+        public static uint countOfRequestsForModulation = 100000;
+        public static uint[] countOfRefusalsBySource = new uint[countOfSources];
+        public static uint[] countOfCompletedRequestsBySource = new uint[countOfSources];
+        public static double[] averageRequestInSystemTime = new double[countOfSources];
+        public static double[] averageRequestWaitingTime = new double[countOfSources];
+        public static double[] averageRequestProcessingTime = new double[countOfSources];
+        public static double[] waitingDispersion = new double[countOfSources];
+        public static double[] processingDispersion = new double[countOfSources];
 
         public static uint countOfDevicesRefusals = 0;
         public static Random rand = new Random();
         public static double currentTime = 0.0;
 
         public static bool exitFlag = false;
+
+        public static List<Models.Request> refusedRequests = new List<Models.Request>();
+        public static List<Models.Request> completedRequests = new List<Models.Request>();
 
         private static double[] closestSourcesEvents;
         private static double[] closestDevicesEvents;
@@ -150,6 +161,14 @@ namespace smo_project.Managers
                 updateStatistics(ref countOfRefusedRequests, ref countOfCompletedRequests, frManager);
             }
 
+            countRefusals();
+            countCompletedRequests();
+            countAverageInSystemTime();
+            countAverageWaitingTime();
+            countAverageProcessingTime();
+            countWaitingDispersion();
+            countProcessingDispersion();
+
             if (mode == ModellingMode.auto)
             {
                 double devicesUsage = 0;
@@ -157,7 +176,7 @@ namespace smo_project.Managers
                 {
                     devicesUsage += frManager.getDeviceUsage(i);
                 }
-                printAdditionalInfo(countOfCompletedRequests, countOfRefusedRequests, devicesUsage/countOfDevices, currentTime);
+                printAdditionalInfo(countOfCompletedRequests, countOfRefusedRequests, devicesUsage / countOfDevices, currentTime);
                 printResults(frManager, srManager);
             }
         }
@@ -237,9 +256,16 @@ namespace smo_project.Managers
             uint fieldGeneratedRequests = 11;
             uint fieldAverage = 15;
             uint fieldNumberLength = (uint)(countOfSources - 1).ToString().Length + 2;
-            uint fieldsCount = 3;
+            uint fieldRefusalProbability = 11;
+            uint fieldInSystemTime = 13;
+            uint fieldWaitingTime = 8;
+            uint fieldProcessingTime = 8;
+            uint fieldDispersionProcessing = 8;
+            uint fieldDispersionWaiting = 8;
+            uint fieldsCount = 9;
 
-            uint sum = fieldGeneratedRequests + fieldNumberLength + fieldsCount + fieldAverage;
+            uint sum = fieldGeneratedRequests + fieldNumberLength + fieldsCount + fieldAverage + fieldRefusalProbability
+                + fieldInSystemTime + fieldWaitingTime + fieldProcessingTime + fieldDispersionProcessing + fieldDispersionWaiting;
 
             Console.WriteLine(" Sources ");
             printSeparator(sum, '-');
@@ -248,6 +274,18 @@ namespace smo_project.Managers
             printField(fieldGeneratedRequests, "Gen. Req.");
             Console.Write('|');
             printField(fieldAverage, "Av. Gen. Time");
+            Console.Write('|');
+            printField(fieldRefusalProbability, "P refusal");
+            Console.Write('|');
+            printField(fieldInSystemTime, "T in system");
+            Console.Write('|');
+            printField(fieldWaitingTime, "T wait");
+            Console.Write('|');
+            printField(fieldProcessingTime, "T proc");
+            Console.Write('|');
+            printField(fieldDispersionProcessing, "D proc");
+            Console.Write('|');
+            printField(fieldDispersionWaiting, "D wait");
             Console.Write("|\n");
             printSeparator(sum, '-');
 
@@ -257,6 +295,18 @@ namespace smo_project.Managers
                 printField(fieldGeneratedRequests, srManager.getSourceCountGeneratedRequests(i).ToString());
                 Console.Write('|');
                 printField(fieldAverage, (currentTime / srManager.getSourceCountGeneratedRequests(i)).ToString());
+                Console.Write('|');
+                printField(fieldRefusalProbability, ((double)countOfRefusalsBySource[i] / srManager.getSourceCountGeneratedRequests(i)).ToString());
+                Console.Write('|');
+                printField(fieldInSystemTime, averageRequestInSystemTime[i].ToString());
+                Console.Write('|');
+                printField(fieldWaitingTime, averageRequestWaitingTime[i].ToString());
+                Console.Write('|');
+                printField(fieldProcessingTime, averageRequestProcessingTime[i].ToString());
+                Console.Write('|');
+                printField(fieldDispersionProcessing, processingDispersion[i].ToString());
+                Console.Write('|');
+                printField(fieldDispersionWaiting, waitingDispersion[i].ToString());
                 Console.Write("|\n");
             }
             printSeparator(sum, '-');
@@ -368,7 +418,14 @@ namespace smo_project.Managers
                     Console.Write('|');
                     printField(fieldCompletionTimeLength, "-");
                 }
-                Console.Write("|\n");
+                if (i == frManager.Pointer)
+                {
+                    Console.Write("| * \n");
+                }
+                else
+                {
+                    Console.Write("|\n");
+                }
             }
             printSeparator(fieldRequestIdLength + fieldCompletionTimeLength + fieldNumberLength + fieldsCount, '-');
         }
@@ -441,7 +498,7 @@ namespace smo_project.Managers
             {
                 Console.Write(' ');
             }
-            
+
             Console.Write(data);
             for (int j = 0; j < fieldLength - data.Length - indent; j++)
             {
@@ -468,6 +525,11 @@ namespace smo_project.Managers
                     exitFlag = true;
                     return;
                 }
+                else if (temp == "end")
+                {
+                    mode = ModellingMode.auto;
+                    return;
+                }
                 printSourcesState(srManager);
                 printBufferState();
                 printDevicesState(frManager);
@@ -492,6 +554,116 @@ namespace smo_project.Managers
             {
                 mode = ModellingMode.auto;
                 Console.WriteLine("Incorrect input. Default value is auto");
+            }
+        }
+
+        private static void countRefusals()
+        {
+            Models.Request temp;
+            uint sourceID = 0;
+            uint stackSize = (uint)refusedRequests.Count;
+            for (uint i = 0; i < stackSize; i++)
+            {
+                temp = refusedRequests[(int)i];
+                sourceID = temp.SourceID;
+                countOfRefusalsBySource[sourceID]++;
+            }
+        }
+
+        private static void countCompletedRequests()
+        {
+            Models.Request temp;
+            uint sourceID = 0;
+            uint[] countOfRequestsBySource = new uint[countOfSources];
+            uint stackSize = (uint)completedRequests.Count;
+
+            for (uint i = 0; i < stackSize; i++)
+            {
+                temp = completedRequests[(int)i];
+                sourceID = temp.SourceID;
+                countOfCompletedRequestsBySource[sourceID]++;
+            }
+        }
+
+        private static void countAverageInSystemTime()
+        {
+            foreach (Models.Request req in completedRequests)
+            {
+                averageRequestInSystemTime[req.SourceID] += req.CompletionTime - req.CreationTime;
+            }
+
+            //foreach (Models.Request req in refusedRequests)
+            //{
+            //    averageRequestInSystemTime[req.SourceID] += req.CompletionTime - req.CreationTime;
+            //}
+
+            for (uint i = 0; i < countOfSources; i++)
+            {
+                averageRequestInSystemTime[i] = averageRequestInSystemTime[i] / countOfCompletedRequestsBySource[i]; //(countOfRefusalsBySource[i] + countOfCompletedRequestsBySource[i]);
+            }
+        }
+
+        private static void countAverageWaitingTime()
+        {
+            foreach (Models.Request req in completedRequests)
+            {
+                averageRequestWaitingTime[req.SourceID] += (req.CompletionTime - req.CreationTime) - req.ProcessingTime;
+            }
+
+            //foreach (Models.Request req in refusedRequests)
+            //{
+            //    averageRequestWaitingTime[req.SourceID] += req.CompletionTime - req.CreationTime;
+            //}
+
+            for (uint i = 0; i < countOfSources; i++)
+            {
+                averageRequestWaitingTime[i] = averageRequestWaitingTime[i] / countOfCompletedRequestsBySource[i];//(countOfRefusalsBySource[i] + countOfCompletedRequestsBySource[i]);
+            }
+        }
+
+        private static void countAverageProcessingTime()
+        {
+            foreach (Models.Request req in completedRequests)
+            {
+                averageRequestProcessingTime[req.SourceID] += req.ProcessingTime;
+            }
+
+            for (uint i = 0; i < countOfSources; i++)
+            {
+                averageRequestProcessingTime[i] = averageRequestProcessingTime[i] / countOfCompletedRequestsBySource[i];
+            }
+        }
+
+        private static void countWaitingDispersion()
+        {
+            foreach (Models.Request req in completedRequests)
+            {
+                waitingDispersion[req.SourceID] += Math.Pow((averageRequestWaitingTime[req.SourceID]
+                    - (req.CompletionTime - req.CreationTime - req.ProcessingTime)), 2);
+            }
+
+            foreach (Models.Request req in refusedRequests)
+            {
+                waitingDispersion[req.SourceID] += Math.Pow((averageRequestWaitingTime[req.SourceID]
+                    - (req.CompletionTime - req.CreationTime - req.ProcessingTime)), 2);
+            }
+
+            for (uint i = 0; i < countOfSources; i++)
+            {
+                waitingDispersion[i] = waitingDispersion[i] / (countOfRefusalsBySource[i] + countOfCompletedRequestsBySource[i]);
+            }
+        }
+
+        private static void countProcessingDispersion()
+        {
+            foreach (Models.Request req in completedRequests)
+            {
+                processingDispersion[req.SourceID] += Math.Pow((averageRequestProcessingTime[req.SourceID] - req.ProcessingTime), 2);
+            }
+
+            for (uint i = 0; i < countOfSources; i++)
+            {
+                processingDispersion[i] = processingDispersion[i] / countOfCompletedRequestsBySource[i];
             }
         }
     }

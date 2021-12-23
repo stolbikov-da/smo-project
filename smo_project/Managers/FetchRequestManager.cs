@@ -158,5 +158,6 @@ namespace smo_project.Managers
         }
 
         public uint CountOfCompletedRequests { get => countOfCompletedRequests; }
+        public uint Pointer { get => pointer; }
     }
 }

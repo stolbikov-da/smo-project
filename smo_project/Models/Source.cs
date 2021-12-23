@@ -45,7 +45,7 @@ namespace smo_project.Models
             {
                 throw new MethodAccessException("Source" + id + ": tried to create request, while creating another!");
             }
-            currentRequest = new Request(nextRequestReadyTime);
+            currentRequest = new Request(nextRequestReadyTime, id);
             return currentRequest;
         }
 

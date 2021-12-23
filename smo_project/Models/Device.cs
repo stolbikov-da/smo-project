@@ -41,6 +41,7 @@ namespace smo_project.Models
                 usageTime += processingTime;
                 nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
                 requestOnDevice.CompletionTime = nextRequestCompletedTime;
+                requestOnDevice.ProcessingTime = processingTime;
             }
         }
 
@@ -49,6 +50,7 @@ namespace smo_project.Models
             if (!isAvailable())
             {
                 requestOnDevice.closeRequest();
+                Managers.ModellingManager.completedRequests.Add(requestOnDevice);
                 requestOnDevice = null;
                 countOfCompletedRequests++;
             }

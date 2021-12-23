@@ -14,10 +14,13 @@ namespace smo_project.Models
         private uint id = 0;
         private double creationTime = 0.0;
         private double completionTime = 0.0;
+        private double processingTime = 0.0;
+        private uint sourceID = 0;
 
-        public Request(double creationTime)
+        public Request(double creationTime, uint sourceID)
         {
             this.creationTime = creationTime;
+            this.sourceID = sourceID;
 
             id = countOfCreatedRequests++;
         }
@@ -32,5 +35,7 @@ namespace smo_project.Models
         public double CompletionTime { get => completionTime; set => completionTime = value; }
 
         public uint Id { get => id; }
+        public uint SourceID { get => sourceID; }
+        public double ProcessingTime { get => processingTime; set => processingTime = value; }
     }
 }
