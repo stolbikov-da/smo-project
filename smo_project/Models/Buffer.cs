@@ -64,7 +64,8 @@ namespace smo_project.Models
             }
             else
             {
-                requests[pointer].CompletionTime = Managers.ModellingManager.currentTime;
+
+                requests[pointer].refuse(Managers.ModellingManager.currentTime);
                 Managers.ModellingManager.refusedRequests.Add(requests[pointer]);
                 countOfRefusals++;
             }

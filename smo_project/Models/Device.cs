@@ -9,6 +9,7 @@ namespace smo_project.Models
         private uint id = 0;
         private uint countOfCompletedRequests = 0;
         private double nextRequestCompletedTime = 0.0;
+        private double processingTime = 0.0;
         private uint productivity = 1;
         private Request requestOnDevice = null;
         private double usageTime = 0.0;
@@ -32,12 +33,10 @@ namespace smo_project.Models
                 double lnA = Math.Log(A);
                 double B = A * (1 - Managers.ModellingManager.rand.NextDouble());
                 double lnB = Math.Log(B);
-                double processingTime = (lnA - lnB) / A / productivity;                
+                processingTime = (lnA - lnB) / A / productivity;                
                 nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
 
                 requestOnDevice = request;
-                requestOnDevice.CompletionTime = nextRequestCompletedTime;
-                requestOnDevice.ProcessingTime = processingTime;
                 usageTime += processingTime;
             }
             else
@@ -50,7 +49,7 @@ namespace smo_project.Models
         {
             if (!isAvailable())
             {
-                requestOnDevice.closeRequest();
+                requestOnDevice.close(nextRequestCompletedTime, processingTime, id);
                 Managers.ModellingManager.completedRequests.Add(requestOnDevice);
                 requestOnDevice = null;
                 countOfCompletedRequests++;
