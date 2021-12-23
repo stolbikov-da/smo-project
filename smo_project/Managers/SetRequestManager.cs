@@ -47,7 +47,7 @@ namespace smo_project.Managers
 
         public Models.Request getRequestFromSource(uint sourceID)
         {
-            return sources[sourceID].CurrentRequest;
+            return sources[sourceID].getCurrentRequest();
         }
 
         public Models.Request getNewRequest()

@@ -37,6 +37,7 @@ namespace smo_project.Models
                 nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
 
                 requestOnDevice = request;
+                requestOnDevice.CompletionTime = nextRequestCompletedTime;
                 usageTime += processingTime;
             }
             else

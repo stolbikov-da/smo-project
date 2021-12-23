@@ -9,13 +9,7 @@ namespace smo_project.Managers
 {
     class ModellingManager
     {
-        public enum ModellingMode
-        {
-            auto = 0,
-            step = 1
-        }
-
-        public static ModellingMode mode = ModellingMode.auto;
+        //Modelling parametres
         public static double processingTimeLambda = 0.5;
         public static uint devicesProductivity = 1;
         public static double maxRequestCreationTime = 2;
@@ -24,6 +18,27 @@ namespace smo_project.Managers
         public static uint countOfDevices = 2;
         public static uint bufferSize = 3;
         public static uint countOfRequestsForModulation = 100000;
+
+        public enum ModellingMode
+        {
+            auto = 0,
+            step = 1
+        }
+
+        public static ModellingMode mode = ModellingMode.auto;
+
+        public static Random rand = new Random();
+        public static double currentTime = 0.0;
+        public static bool exitFlag = false;
+        public static List<Models.Request> refusedRequests = new List<Models.Request>();
+        public static List<Models.Request> completedRequests = new List<Models.Request>();
+        private static double[] closestSourcesEvents;
+        private static double[] closestDevicesEvents;
+        private static Models.Buffer buffer = new Models.Buffer(bufferSize);
+        private static SetRequestManager srManager = new SetRequestManager(buffer, countOfSources, minRequestCreationTime, maxRequestCreationTime);
+        private static FetchRequestManager frManager = new FetchRequestManager(buffer, countOfDevices);
+
+        //Statistics
         public static uint[] countOfRefusalsBySource = new uint[countOfSources];
         public static uint[] countOfCompletedRequestsBySource = new uint[countOfSources];
         public static double[] averageRequestInSystemTime = new double[countOfSources];
@@ -32,31 +47,11 @@ namespace smo_project.Managers
         public static double[] waitingDispersion = new double[countOfSources];
         public static double[] processingDispersion = new double[countOfSources];
 
-        public static uint countOfDevicesRefusals = 0;
-        public static Random rand = new Random();
-        public static double currentTime = 0.0;
-
-        public static bool exitFlag = false;
-
-        public static List<Models.Request> refusedRequests = new List<Models.Request>();
-        public static List<Models.Request> completedRequests = new List<Models.Request>();
-
-        private static double[] closestSourcesEvents;
-        private static double[] closestDevicesEvents;
-
-        private static Models.Buffer buffer = new Models.Buffer(bufferSize);
-
         public static void startModelling()
         {
             chooseModellingMode(ref mode);
             printModellingParameters();
             Console.WriteLine();
-
-            uint countOfCompletedRequests = 0;
-            uint countOfRefusedRequests = 0;
-
-            SetRequestManager srManager = new SetRequestManager(buffer, countOfSources, minRequestCreationTime, maxRequestCreationTime);
-            FetchRequestManager frManager = new FetchRequestManager(buffer, countOfDevices);
 
             closestSourcesEvents = new double[countOfSources];
             closestDevicesEvents = new double[countOfDevices];
@@ -73,9 +68,11 @@ namespace smo_project.Managers
                 }
             }
 
-            while (countOfCompletedRequests + countOfRefusedRequests < countOfRequestsForModulation)
+            double nextTime;
+
+            while (completedRequests.Count + refusedRequests.Count < countOfRequestsForModulation)
             {
-                double nextTime = getNextClosestEventTime();
+                nextTime = getNextClosestEventTime();
 
                 if (closestSourcesEvents.Contains(nextTime))
                 {
@@ -158,16 +155,9 @@ namespace smo_project.Managers
                 {
                     Console.WriteLine("ERROR: Даблы не хотят нормально сравниваться. Ну или getNextClosestEventTime работает неправильно, или массивы времен ивентов сломаны.");
                 }
-                updateStatistics(ref countOfRefusedRequests, ref countOfCompletedRequests);
             }
 
-            countRefusals();
-            countCompletedRequests();
-            countAverageInSystemTime();
-            countAverageWaitingTime();
-            countAverageProcessingTime();
-            countWaitingDispersion();
-            countProcessingDispersion();
+            updateStatistics();
 
             if (mode == ModellingMode.auto)
             {
@@ -176,8 +166,8 @@ namespace smo_project.Managers
                 {
                     devicesUsage += frManager.getDeviceUsage(i);
                 }
-                printAdditionalInfo(countOfCompletedRequests, countOfRefusedRequests, devicesUsage / countOfDevices, currentTime);
-                printResults(frManager, srManager);
+                printAdditionalInfo((uint) completedRequests.Count, (uint) refusedRequests.Count, devicesUsage / countOfDevices, currentTime);
+                printResults();
             }
         }
 
@@ -203,20 +193,24 @@ namespace smo_project.Managers
             return result;
         }
 
-        private static void updateStatistics(ref uint countOfRefusedRequests, ref uint countOfCompletedRequests)
+        private static void updateStatistics()
         {
-            countOfRefusedRequests = (uint) refusedRequests.Count;
-            countOfCompletedRequests = (uint) completedRequests.Count;
+            countRefusals();
+            countCompletedRequests();
+            countAverageInSystemTime();
+            countAverageWaitingTime();
+            countAverageProcessingTime();
+            countWaitingDispersion();
+            countProcessingDispersion();
         }
 
-        private static void printResults(FetchRequestManager frManager, SetRequestManager srManager)
+        private static void printResults()
         {
-            printDevicesResults(frManager);
-            printSourcesResults(srManager);
-            printBufferResults();
+            printDevicesResults();
+            printSourcesResults();
         }
 
-        private static void printDevicesResults(FetchRequestManager frManager)
+        private static void printDevicesResults()
         {
             uint fieldProcessedRequests = 12;
             uint fieldUsage = 7;
@@ -251,7 +245,7 @@ namespace smo_project.Managers
             printSeparator(sum, '-');
         }
 
-        private static void printSourcesResults(SetRequestManager srManager)
+        private static void printSourcesResults()
         {
             uint fieldGeneratedRequests = 11;
             uint fieldAverage = 15;
@@ -312,10 +306,6 @@ namespace smo_project.Managers
             printSeparator(sum, '-');
         }
 
-        private static void printBufferResults()
-        {
-        }
-
         private static void printModellingParameters()
         {
             Console.WriteLine("-----------------------------------------");
@@ -340,7 +330,7 @@ namespace smo_project.Managers
             return result;
         }
 
-        private static void printSourcesState(SetRequestManager srManager)
+        private static void printSourcesState()
         {
             uint fieldRequestIdLength = 12;
             uint fieldGenTimeLength = 17;
@@ -382,7 +372,7 @@ namespace smo_project.Managers
             printSeparator(fieldRequestIdLength + fieldGenTimeLength + fieldNumberLength + fieldsCount, '-');
         }
 
-        private static void printDevicesState(FetchRequestManager frManager)
+        private static void printDevicesState()
         {
             uint fieldRequestIdLength = 12;
             uint fieldCompletionTimeLength = 17;
@@ -530,9 +520,9 @@ namespace smo_project.Managers
                     mode = ModellingMode.auto;
                     return;
                 }
-                printSourcesState(srManager);
+                printSourcesState();
                 printBufferState();
-                printDevicesState(frManager);
+                printDevicesState();
             }
         }
 

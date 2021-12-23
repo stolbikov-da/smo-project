@@ -55,6 +55,13 @@ namespace smo_project.Models
             return result;
         }
 
+        public Request getCurrentRequest()
+        {
+            Request temp = currentRequest;
+            currentRequest = null;
+            return temp;
+        }
+
         public double NextRequestReadyTime { get => nextRequestReadyTime; }
         public Request CurrentRequest { get => currentRequest; }
         public uint CountOfCreatedRequests { get => countOfCreatedRequests; }
