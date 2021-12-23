@@ -1,17 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace smo_project.Managers
 {
     class FetchRequestManager
     {
-        private uint countOfCompletedRequests = 0;
         private Models.Buffer buffer;
         private Models.Device[] devices;
-        private Models.Request requestWaitingDevice = null;
         private uint pointer = 0;
 
         public FetchRequestManager(Models.Buffer buffer, uint countOfDevices)
@@ -38,20 +32,16 @@ namespace smo_project.Managers
         public uint setRequestToDevice()
         {
             uint result = 0;
-
-            if (requestWaitingDevice is null)
-            {
-                requestWaitingDevice = getRequestFromBuffer();
-            }
+            Models.Request temp = null;
 
             for (uint i = 0; i < devices.Length; i++)
             {
                 if (devices[pointer].isAvailable())
                 {
-                    devices[pointer].setRequestToDevice(requestWaitingDevice);
+                    temp = getRequestFromBuffer();
+                    devices[pointer].setRequestToDevice(temp);
                     result = pointer;
                     pointer = (pointer + 1) % (uint)devices.Length;
-                    requestWaitingDevice = null;
                     break;
                 }
                 else
@@ -60,7 +50,7 @@ namespace smo_project.Managers
                 }
             }
 
-            if (requestWaitingDevice is not null)
+            if (temp is null)
             {
                 throw new InvalidOperationException("FetchRequestManager: tried to set request but all devices are busy!");
             }
@@ -70,18 +60,21 @@ namespace smo_project.Managers
 
         public void processRequestOnDevice(uint deviceID)
         {
+            if (deviceID >= devices.Length)
+            {
+                throw new ArgumentOutOfRangeException("FetchRequestManager: out of range, processRequestOnDevice method!");
+            }
+
+            if (devices[deviceID].isAvailable())
+            {
+                throw new ArgumentException("FetchRequestManager: device is available, but tried to process request!");
+            }
+
             devices[deviceID].processRequest();
-            countOfCompletedRequests++;
         }
 
         private Models.Request getRequestFromBuffer()
         {
-            if (requestWaitingDevice is not null)
-            {
-                throw new InvalidOperationException("FetchRequestManager: tried to get request from buffer,"
-                    + "but there is a request that has not been sent to the device.");
-            }
-
             Models.Request request = null;
             try
             {
@@ -92,23 +85,7 @@ namespace smo_project.Managers
                 throw;
             }
 
-            requestWaitingDevice = request;
             return request;
-        }
-
-        public double getNextRequestCompletedTimeForDevice(uint deviceID)
-        {
-            if (deviceID >= devices.Length)
-            {
-                throw new ArgumentOutOfRangeException("FetchRequestManager: deviceID is out of range!");
-            }
-
-            if (devices[deviceID].isAvailable())
-            {
-                throw new InvalidOperationException("FetchRequestManager: there is no request on this device!");
-            }
-
-            return devices[deviceID].NextRequestCompletedTime;
         }
 
         public bool isAvailableDevice()
@@ -126,15 +103,19 @@ namespace smo_project.Managers
             return result;
         }
 
-        public bool isRequestWaitingDevice()
+        public double getNextRequestCompletedTimeForDevice(uint deviceID)
         {
-            bool result = false;
-            if (requestWaitingDevice is not null)
+            if (deviceID >= devices.Length)
             {
-                result = true;
+                throw new ArgumentOutOfRangeException("FetchRequestManager: deviceID is out of range!");
             }
 
-            return result;
+            if (devices[deviceID].isAvailable())
+            {
+                throw new InvalidOperationException("FetchRequestManager: there is no request on this device!");
+            }
+
+            return devices[deviceID].NextRequestCompletedTime;
         }
 
         public double getDeviceUsage(uint deviceID)
@@ -157,7 +138,6 @@ namespace smo_project.Managers
             return devices[deviceID].RequestOnDevice;
         }
 
-        public uint CountOfCompletedRequests { get => countOfCompletedRequests; }
         public uint Pointer { get => pointer; }
     }
 }

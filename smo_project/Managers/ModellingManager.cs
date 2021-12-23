@@ -158,7 +158,7 @@ namespace smo_project.Managers
                 {
                     Console.WriteLine("ERROR: Даблы не хотят нормально сравниваться. Ну или getNextClosestEventTime работает неправильно, или массивы времен ивентов сломаны.");
                 }
-                updateStatistics(ref countOfRefusedRequests, ref countOfCompletedRequests, frManager);
+                updateStatistics(ref countOfRefusedRequests, ref countOfCompletedRequests);
             }
 
             countRefusals();
@@ -203,10 +203,10 @@ namespace smo_project.Managers
             return result;
         }
 
-        private static void updateStatistics(ref uint countOfRefusedRequests, ref uint countOfCompletedRequests, FetchRequestManager frManager)
+        private static void updateStatistics(ref uint countOfRefusedRequests, ref uint countOfCompletedRequests)
         {
-            countOfRefusedRequests = buffer.CountOfRefusals;
-            countOfCompletedRequests = frManager.CountOfCompletedRequests;
+            countOfRefusedRequests = (uint) refusedRequests.Count;
+            countOfCompletedRequests = (uint) completedRequests.Count;
         }
 
         private static void printResults(FetchRequestManager frManager, SetRequestManager srManager)
