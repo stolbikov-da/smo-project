@@ -1,15 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace smo_project.Models
 {
     class Source
     {
         private static uint countOfCreatedSources = 0;
-        private static uint countOfAllCreatedRequests = 0;
 
         private uint id = 0;
         private double nextRequestReadyTime = 0.0;
@@ -36,7 +31,6 @@ namespace smo_project.Models
             if (isAvailable())
             {
                 countOfCreatedRequests++;
-                countOfAllCreatedRequests++;
 
                 double delta = maxRequestCreationTime - minRequestCreationTime;
                 nextRequestReadyTime += Managers.ModellingManager.rand.NextDouble() * delta + minRequestCreationTime;
@@ -62,8 +56,7 @@ namespace smo_project.Models
         }
 
         public double NextRequestReadyTime { get => nextRequestReadyTime; }
-        public Request CurrentRequest { get => currentRequest; set => currentRequest = value; }
-
+        public Request CurrentRequest { get => currentRequest; }
         public uint CountOfCreatedRequests { get => countOfCreatedRequests; }
     }
 }

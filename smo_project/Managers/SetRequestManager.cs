@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace smo_project.Managers
 {
@@ -10,7 +6,6 @@ namespace smo_project.Managers
     {
         private Models.Buffer buffer;
         private Models.Source[] sources;
-        private uint countOfGeneratedRequests = 0;
 
         public SetRequestManager(Models.Buffer buffer, uint countOfSources, double minRequestCreationTime, double maxRequestCreationTime)
         {
@@ -48,14 +43,11 @@ namespace smo_project.Managers
             {
                 throw;
             }
-            
         }
 
         public Models.Request getRequestFromSource(uint sourceID)
         {
-            Models.Request temp = sources[sourceID].CurrentRequest;
-            sources[sourceID].CurrentRequest = null;
-            return temp;
+            return sources[sourceID].CurrentRequest;
         }
 
         public Models.Request getNewRequest()
