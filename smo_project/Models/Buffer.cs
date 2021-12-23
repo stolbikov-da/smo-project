@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace smo_project.Models
 {
@@ -64,7 +60,6 @@ namespace smo_project.Models
             }
             else
             {
-
                 requests[pointer].refuse(Managers.ModellingManager.currentTime);
                 Managers.ModellingManager.refusedRequests.Add(requests[pointer]);
                 countOfRefusals++;
