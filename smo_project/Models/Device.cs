@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace smo_project.Models
 {
@@ -16,6 +12,7 @@ namespace smo_project.Models
         private uint productivity = 1;
         private Request requestOnDevice = null;
         private double usageTime = 0.0;
+
         public Device(uint productivity)
         {
             this.productivity = productivity;
@@ -26,7 +23,7 @@ namespace smo_project.Models
         {
             if (request is null)
             {
-                throw new ArgumentNullException("Device" + id + ": buffer is null!");
+                throw new ArgumentNullException("Device" + id + ": request is null!");
             }
 
             if (isAvailable())
@@ -35,13 +32,17 @@ namespace smo_project.Models
                 double lnA = Math.Log(A);
                 double B = A * (1 - Managers.ModellingManager.rand.NextDouble());
                 double lnB = Math.Log(B);
+                double processingTime = (lnA - lnB) / A / productivity;                
+                nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
 
                 requestOnDevice = request;
-                double processingTime = (lnA - lnB) / A / productivity;
-                usageTime += processingTime;
-                nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
                 requestOnDevice.CompletionTime = nextRequestCompletedTime;
                 requestOnDevice.ProcessingTime = processingTime;
+                usageTime += processingTime;
+            }
+            else
+            {
+                throw new InvalidOperationException("Device" + id + ": device is busy, but tried to set request on this device!");
             }
         }
 
@@ -75,7 +76,6 @@ namespace smo_project.Models
         public double NextRequestCompletedTime { get => nextRequestCompletedTime; }
         public Request RequestOnDevice { get => requestOnDevice; }
         public double UsageTime { get => usageTime; }
-
         public uint CountOfCompletedRequests { get => countOfCompletedRequests; }
     }
 }
