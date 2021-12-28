@@ -10,14 +10,16 @@ namespace smo_project.Managers
     class ModellingManager
     {
         //Modelling parametres
+        public static double minProcessingTime = 30;
+        public static double processingTimeMultiplier = 90;
         public static double processingTimeLambda = 0.5;
         public static uint devicesProductivity = 1;
-        public static double maxRequestCreationTime = 2;
-        public static double minRequestCreationTime = 1;
-        public static uint countOfSources = 5;
-        public static uint countOfDevices = 2;
-        public static uint bufferSize = 3;
-        public static uint countOfRequestsForModulation = 100000;
+        public static double maxRequestCreationTime = 480;
+        public static double minRequestCreationTime = 90;
+        public static uint countOfSources = 20;
+        public static uint countOfDevices = 5;
+        public static uint bufferSize = 8;
+        public static uint countOfRequestsForModulation = 2500;
 
         public enum ModellingMode
         {
@@ -35,8 +37,8 @@ namespace smo_project.Managers
         private static double[] closestSourcesEvents;
         private static double[] closestDevicesEvents;
         private static Models.Buffer buffer = new Models.Buffer(bufferSize);
-        private static SetRequestManager srManager = new SetRequestManager(buffer, countOfSources, minRequestCreationTime, maxRequestCreationTime);
-        private static FetchRequestManager frManager = new FetchRequestManager(buffer, countOfDevices);
+        private static SetRequestManager srManager = new SetRequestManager(buffer);
+        private static FetchRequestManager frManager = new FetchRequestManager(buffer);
 
         //Statistics
         public static uint[] countOfRefusalsBySource = new uint[countOfSources];
@@ -53,6 +55,19 @@ namespace smo_project.Managers
             printModellingParameters();
             Console.WriteLine();
 
+            bufferSize = 6;
+            countOfDevices = 3;
+            frManager.addDevice(1);
+            frManager.addDevice(1);
+            frManager.addDevice(1);
+            //frManager.addDevice(1);
+
+            countOfSources = 3;
+            srManager.addSource(180, 240);
+            srManager.addSource(120, 180);
+            //srManager.addSource(40, 90);
+            srManager.addSource(20, 60);
+
             closestSourcesEvents = new double[countOfSources];
             closestDevicesEvents = new double[countOfDevices];
 
@@ -61,7 +76,7 @@ namespace smo_project.Managers
                 srManager.getNewRequest();
                 closestSourcesEvents[i] = srManager.getNextRequestReadyTimeForSource(i);
 
-                step(srManager, frManager);
+                step();
                 if (exitFlag)
                 {
                     return;
@@ -90,7 +105,7 @@ namespace smo_project.Managers
                     Models.Request temp = srManager.getRequestFromSource(sourceID);
                     srManager.setRequestToBuffer(temp);
 
-                    step(srManager, frManager);
+                    step();
                     if (exitFlag)
                     {
                         return;
@@ -101,7 +116,7 @@ namespace smo_project.Managers
                         uint deviceID = frManager.setRequestToDevice();
                         closestDevicesEvents[deviceID] = frManager.getNextRequestCompletedTimeForDevice(deviceID);
 
-                        step(srManager, frManager);
+                        step();
                         if (exitFlag)
                         {
                             return;
@@ -111,7 +126,7 @@ namespace smo_project.Managers
                     srManager.getNewRequest();
                     closestSourcesEvents[sourceID] = srManager.getNextRequestReadyTimeForSource(sourceID);
 
-                    step(srManager, frManager);
+                    step();
                     if (exitFlag)
                     {
                         return;
@@ -133,7 +148,7 @@ namespace smo_project.Managers
 
                     closestDevicesEvents[deviceID] = 0.0;
 
-                    step(srManager, frManager);
+                    step();
                     if (exitFlag)
                     {
                         return;
@@ -144,7 +159,7 @@ namespace smo_project.Managers
                         deviceID = frManager.setRequestToDevice();
                         closestDevicesEvents[deviceID] = frManager.getNextRequestCompletedTimeForDevice(deviceID);
 
-                        step(srManager, frManager);
+                        step();
                         if (exitFlag)
                         {
                             return;
@@ -283,24 +298,56 @@ namespace smo_project.Managers
             Console.Write("|\n");
             printSeparator(sum, '-');
 
+            double value;
             for (uint i = 0; i < countOfSources; i++)
             {
-                Console.Write(" " + i + " |");
-                printField(fieldGeneratedRequests, srManager.getSourceCountGeneratedRequests(i).ToString());
+                printField(fieldNumberLength, i.ToString());
                 Console.Write('|');
-                printField(fieldAverage, (currentTime / srManager.getSourceCountGeneratedRequests(i)).ToString());
+                printField(fieldGeneratedRequests, (countOfCompletedRequestsBySource[i] + countOfRefusalsBySource[i]).ToString());
+                Console.Write('|');
+                value = (currentTime / srManager.getSourceCountGeneratedRequests(i));
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldAverage, value.ToString());
                 Console.Write('|');
                 printField(fieldRefusalProbability, ((double)countOfRefusalsBySource[i] / srManager.getSourceCountGeneratedRequests(i)).ToString());
                 Console.Write('|');
-                printField(fieldInSystemTime, averageRequestInSystemTime[i].ToString());
+                value = averageRequestInSystemTime[i];
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldInSystemTime, value.ToString());
                 Console.Write('|');
-                printField(fieldWaitingTime, averageRequestWaitingTime[i].ToString());
+                value = averageRequestWaitingTime[i];
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldWaitingTime, value.ToString());
                 Console.Write('|');
-                printField(fieldProcessingTime, averageRequestProcessingTime[i].ToString());
+                value = averageRequestProcessingTime[i];
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldProcessingTime, value.ToString());
                 Console.Write('|');
-                printField(fieldDispersionProcessing, processingDispersion[i].ToString());
+                value = processingDispersion[i];
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldDispersionProcessing, value.ToString());
                 Console.Write('|');
-                printField(fieldDispersionWaiting, waitingDispersion[i].ToString());
+                value = waitingDispersion[i];
+                if (value < 0.00001 || value is double.NaN)
+                {
+                    value = 0;
+                }
+                printField(fieldDispersionWaiting, value.ToString());
                 Console.Write("|\n");
             }
             printSeparator(sum, '-');
@@ -474,7 +521,7 @@ namespace smo_project.Managers
         {
             if (fieldLength < 3)
             {
-                throw new ArgumentException("ModellingManager: printField gets incorrect arguements!");
+                throw new ArgumentException("ModellingManager: printField gets incorrect arguments!");
             }
 
             if (data.Length > fieldLength - 2)
@@ -505,7 +552,7 @@ namespace smo_project.Managers
             Console.Write('\n');
         }
 
-        private static void step(SetRequestManager srManager, FetchRequestManager frManager)
+        private static void step()
         {
             if (mode == ModellingMode.step)
             {

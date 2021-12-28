@@ -33,7 +33,12 @@ namespace smo_project.Models
                 double lnA = Math.Log(A);
                 double B = A * (1 - Managers.ModellingManager.rand.NextDouble());
                 double lnB = Math.Log(B);
-                processingTime = (lnA - lnB) / A / productivity;                
+                double temp = (lnA - lnB) / A / productivity;
+                if (temp > 2)
+                {
+                    temp = 2;
+                }
+                processingTime = temp * Managers.ModellingManager.processingTimeMultiplier / 2 + Managers.ModellingManager.minProcessingTime;                
                 nextRequestCompletedTime = Managers.ModellingManager.currentTime + processingTime;
 
                 requestOnDevice = request;

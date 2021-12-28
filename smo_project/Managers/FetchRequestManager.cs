@@ -1,32 +1,28 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace smo_project.Managers
 {
     class FetchRequestManager
     {
         private Models.Buffer buffer;
-        private Models.Device[] devices;
+        private List<Models.Device> devices;
         private uint pointer = 0;
 
-        public FetchRequestManager(Models.Buffer buffer, uint countOfDevices)
+        public FetchRequestManager(Models.Buffer buffer)
         {
-            if (countOfDevices == 0)
-            {
-                throw new ArgumentNullException("FetchRequestManager: count of devices == 0!");
-            }
-
             if (buffer is null)
             {
                 throw new ArgumentNullException("FetchRequestManager: buffer is null!");
             }
 
             this.buffer = buffer;
-            devices = new Models.Device[countOfDevices];
+            devices = new List<Models.Device>();
+        }
 
-            for (int i = 0; i < countOfDevices; i++)
-            {
-                devices[i] = new Models.Device(ModellingManager.devicesProductivity);
-            }
+        public void addDevice(uint productivity)
+        {
+            devices.Add(new Models.Device(productivity));
         }
 
         public uint setRequestToDevice()
@@ -34,19 +30,19 @@ namespace smo_project.Managers
             uint result = 0;
             Models.Request temp = null;
 
-            for (uint i = 0; i < devices.Length; i++)
+            for (uint i = 0; i < devices.Count; i++)
             {
-                if (devices[pointer].isAvailable())
+                if (devices[(int)pointer].isAvailable())
                 {
                     temp = getRequestFromBuffer();
-                    devices[pointer].setRequestToDevice(temp);
+                    devices[(int)pointer].setRequestToDevice(temp);
                     result = pointer;
-                    pointer = (pointer + 1) % (uint)devices.Length;
+                    pointer = (pointer + 1) % (uint)devices.Count;
                     break;
                 }
                 else
                 {
-                    pointer = (pointer + 1) % (uint)devices.Length;
+                    pointer = (pointer + 1) % (uint)devices.Count;
                 }
             }
 
@@ -60,17 +56,17 @@ namespace smo_project.Managers
 
         public void processRequestOnDevice(uint deviceID)
         {
-            if (deviceID >= devices.Length)
+            if (deviceID >= devices.Count)
             {
                 throw new ArgumentOutOfRangeException("FetchRequestManager: out of range, processRequestOnDevice method!");
             }
 
-            if (devices[deviceID].isAvailable())
+            if (devices[(int)deviceID].isAvailable())
             {
                 throw new ArgumentException("FetchRequestManager: device is available, but tried to process request!");
             }
 
-            devices[deviceID].processRequest();
+            devices[(int)deviceID].processRequest();
         }
 
         private Models.Request getRequestFromBuffer()
@@ -92,9 +88,9 @@ namespace smo_project.Managers
         {
             bool result = false;
 
-            for (uint i = 0; i < devices.Length; i++)
+            for (uint i = 0; i < devices.Count; i++)
             {
-                if (devices[i].isAvailable())
+                if (devices[(int)i].isAvailable())
                 {
                     result = true;
                     break;
@@ -105,37 +101,37 @@ namespace smo_project.Managers
 
         public double getNextRequestCompletedTimeForDevice(uint deviceID)
         {
-            if (deviceID >= devices.Length)
+            if (deviceID >= devices.Count)
             {
                 throw new ArgumentOutOfRangeException("FetchRequestManager: deviceID is out of range!");
             }
 
-            if (devices[deviceID].isAvailable())
+            if (devices[(int)deviceID].isAvailable())
             {
                 throw new InvalidOperationException("FetchRequestManager: there is no request on this device!");
             }
 
-            return devices[deviceID].NextRequestCompletedTime;
+            return devices[(int)deviceID].NextRequestCompletedTime;
         }
 
         public double getDeviceUsage(uint deviceID)
         {
-            return devices[deviceID].UsageTime / ModellingManager.currentTime;
+            return devices[(int)deviceID].UsageTime / ModellingManager.currentTime;
         }
 
         public double getDeviceCompletedRequests(uint deviceID)
         {
-            return devices[deviceID].CountOfCompletedRequests;
+            return devices[(int)deviceID].CountOfCompletedRequests;
         }
 
         public double getDeviceAverageProcessingTime(uint deviceID)
         {
-            return devices[deviceID].UsageTime / devices[deviceID].CountOfCompletedRequests;
+            return devices[(int)deviceID].UsageTime / devices[(int)deviceID].CountOfCompletedRequests;
         }
 
         public Models.Request getDeviceCurrentRequest(uint deviceID)
         {
-            return devices[deviceID].RequestOnDevice;
+            return devices[(int)deviceID].RequestOnDevice;
         }
 
         public uint Pointer { get => pointer; }

@@ -1,36 +1,27 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace smo_project.Managers
 {
     class SetRequestManager
     {
         private Models.Buffer buffer;
-        private Models.Source[] sources;
+        private List<Models.Source> sources;
 
-        public SetRequestManager(Models.Buffer buffer, uint countOfSources, double minRequestCreationTime, double maxRequestCreationTime)
+        public SetRequestManager(Models.Buffer buffer)
         {
-            if (countOfSources == 0)
-            {
-                throw new ArgumentNullException("SetRequestManager: count of sources == 0!");
-            }
-
             if (buffer is null)
             {
                 throw new ArgumentNullException("SetRequestManager: buffer is null!");
             }
 
-            if (maxRequestCreationTime < minRequestCreationTime)
-            {
-                throw new ArgumentException("SetRequestManager: Max creation time less than min creation time!");
-            }
-
             this.buffer = buffer;
-            sources = new Models.Source[countOfSources];
+            sources = new List<Models.Source>();
+        }
 
-            for (int i = 0; i < countOfSources; i++)
-            {
-                sources[i] = new Models.Source(minRequestCreationTime, maxRequestCreationTime);
-            }
+        public void addSource(double minRequestCreationTime, double maxRequestCreationTime)
+        {
+            sources.Add(new Models.Source(minRequestCreationTime, maxRequestCreationTime));
         }
 
         public void setRequestToBuffer(Models.Request request)
@@ -47,7 +38,7 @@ namespace smo_project.Managers
 
         public Models.Request getRequestFromSource(uint sourceID)
         {
-            return sources[sourceID].getCurrentRequest();
+            return sources[(int)sourceID].getCurrentRequest();
         }
 
         public Models.Request getNewRequest()
@@ -68,19 +59,19 @@ namespace smo_project.Managers
 
         public double getNextRequestReadyTimeForSource(uint sourceID)
         {
-            if (sourceID >= sources.Length)
+            if (sourceID >= sources.Count)
             {
                 throw new ArgumentOutOfRangeException("SetRequestManager: sourceID is out of range!");
             }
 
-            return sources[sourceID].NextRequestReadyTime;
+            return sources[(int)sourceID].NextRequestReadyTime;
         }
 
         public uint getSourceIdByNextReadyTime(double time)
         {
-            for (uint i = 0; i < sources.Length; i++)
+            for (uint i = 0; i < sources.Count; i++)
             {
-                if (sources[i].NextRequestReadyTime == time)
+                if (sources[(int)i].NextRequestReadyTime == time)
                 {
                     return i;
                 }
@@ -91,12 +82,12 @@ namespace smo_project.Managers
 
         public Models.Request getSourceCurrentRequest(uint sourceID)
         {
-            return sources[sourceID].CurrentRequest;
+            return sources[(int)sourceID].CurrentRequest;
         }
 
         public uint getSourceCountGeneratedRequests(uint sourceID)
         {
-            return sources[sourceID].CountOfCreatedRequests;
+            return sources[(int)sourceID].CountOfCreatedRequests;
         }
     }
 }
